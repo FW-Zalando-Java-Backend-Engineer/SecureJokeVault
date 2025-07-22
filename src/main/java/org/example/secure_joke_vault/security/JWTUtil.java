@@ -6,7 +6,6 @@ import javax.crypto.SecretKey;
 import io.jsonwebtoken.security.Keys;
 
 import org.springframework.beans.factory.annotation.Value;
-
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -43,18 +42,63 @@ public class JWTUtil {
 
     }
 
+    /**
+     * Converts the JWT secret string into a secure {@link SecretKey}
+     * for signing and validating JWTs using HMAC algorithms (e.g., HS256).
+     * Requires the secret to be at least 256 bits (32 characters).
+     *
+     * @return a {@link SecretKey} derived from the configured secret
+     */
     private SecretKey getSigningKey() {
         return  Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
+    /**
+     * Extracts the username from a given token.
+     * @param token the JWT token
+     * @return the subject (username)
+     */
     public String extractUsername(String token){
-        return Jwts.parserBuilder() // entry point to create a token parser
+        return Jwts.parserBuilder() // entry point to parse a token parser
                 .setSigningKey(getSigningKey()) // use the jwt secret to unlock the token
                 .build() // finalizing the parser configuration
-                .parseClaimsJwt(token) // Parses the token and validate its signature and expiration
+                .parseClaimsJws(token) // Parses the token and validate its signature and expiration
                 .getBody() // get the Payload
                 .getSubject(); // get the 'sub' claim (username)
     }
+
+
+    /**
+     * Checks if a token is expired.
+     * @param token the JWT token
+     * @return true if the token is expired, false otherwise
+     */
+    public boolean isTokenExpired(String token){
+        Date expiration = Jwts.parserBuilder() // entry point to parse a token parser
+                .setSigningKey(getSigningKey()) // use the jwt secret to unlock the token
+                .build() // finalizing the parser configuration
+                .parseClaimsJws(token) // Parse and validate token
+                .getBody() // get the Payload
+                .getExpiration(); // Extracts the expiration date
+        return  expiration.before(new Date()); // Returns true if expired
+    }
+
+    /**
+     * Validates the token by checking the username and ensuring it is not expired.
+     *
+     * @param token    the JWT token to validate
+     * @param username the expected username
+     * @return true if the token is valid and matches the username
+     */
+    public boolean isTokenValid(String token, String username){
+        String extracted = extractUsername(token);
+        return extracted.equals(username) && !isTokenExpired(token);
+
+    }
+
+
+
+
 
 
 
