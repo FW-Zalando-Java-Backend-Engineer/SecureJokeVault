@@ -2,12 +2,13 @@ package org.example.secure_joke_vault.security;
 
 import io.jsonwebtoken.*;
 
-import javax.crypto.SecretKey;
+// import javax.crypto.SecretKey; // Alternative we use java.security.Key interface.
 import io.jsonwebtoken.security.Keys;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.security.Key;
 import java.util.Date;
 
 /**
@@ -27,31 +28,18 @@ public class JWTUtil {
     public String generateToken(String username){
 
         long expirationMillis = 24 * 60 * 60 * 1000; // 1 day in milliseconds
-        Date  now = new Date();
-        Date expiryDate = new Date(now.getTime() + expirationMillis);
+        Date  now = new Date(); // time of now
+        Date expiryDate = new Date(now.getTime() + expirationMillis); // time of now + 1 day
 
         return Jwts.builder() // Start building the JWT using JJWT's fluent builder API
                 .setSubject(username)  // Set the "subject" claim — typically the username or user ID
                 .setIssuedAt(now)  // Set the "iat" (issued at) claim — when the token was created
                 .setExpiration(expiryDate) // Set the "exp" (expiration) claim — when the token will expire
-                .signWith( getSigningKey() ,SignatureAlgorithm.HS256) // Sign the token using HMAC SHA-256 and a secret key
+                .signWith( getSigningKey() , SignatureAlgorithm.HS256) // Sign the token using HMAC SHA-256 and a secret key
                 .compact();  // Finalize and serialize the token as a compact string (Base64-encoded JWT)
-
-
-
-
     }
 
-    /**
-     * Converts the JWT secret string into a secure {@link SecretKey}
-     * for signing and validating JWTs using HMAC algorithms (e.g., HS256).
-     * Requires the secret to be at least 256 bits (32 characters).
-     *
-     * @return a {@link SecretKey} derived from the configured secret
-     */
-    private SecretKey getSigningKey() {
-        return  Keys.hmacShaKeyFor(jwtSecret.getBytes());
-    }
+
 
     /**
      * Extracts the username from a given token.
@@ -59,7 +47,7 @@ public class JWTUtil {
      * @return the subject (username)
      */
     public String extractUsername(String token){
-        return Jwts.parserBuilder() // entry point to parse a token parser
+        return Jwts.parserBuilder() // entry point to parse a token
                 .setSigningKey(getSigningKey()) // use the jwt secret to unlock the token
                 .build() // finalizing the parser configuration
                 .parseClaimsJws(token) // Parses the token and validate its signature and expiration
@@ -99,7 +87,16 @@ public class JWTUtil {
 
 
 
-
+    /**
+     * Converts the JWT secret string into a secure {@link Key}
+     * for signing and validating JWTs using HMAC algorithms (e.g., HS256).
+     * Requires the secret to be at least 256 bits (32 characters).
+     *
+     * @return a {@link Key} derived from the configured secret
+     */
+    private Key getSigningKey() {
+        return  Keys.hmacShaKeyFor(jwtSecret.getBytes());
+    }
 
 
 }
