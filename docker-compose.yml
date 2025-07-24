@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  jokevault:
+    build: .
+    ports:
+      - "${PORT:-8585}:8585"
+    environment:
+      - PORT=8585
+      - MONGODB_URI=${MONGODB_URI}
+      - MONGODB_DATABASE=${MONGODB_DATABASE}
+      - JWT_SECRET=${JWT_SECRET}
+      - JOKE_API_URL=${JOKE_API_URL}
+    env_file:
+      - .env
