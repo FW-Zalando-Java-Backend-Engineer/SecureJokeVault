@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.secure_joke_vault.service.UserDetailsServiceImpl;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -42,17 +43,28 @@ public class JWTFilter extends OncePerRequestFilter {
 
                 if(username != null && SecurityContextHolder.getContext().getAuthentication() == null){
                    // Load User Details from our DB
-                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                    var userDetails = userDetailsService.loadUserByUsername(username);
 
                     // Validate the Token
                     if(jwtUtil.isTokenValid(token, userDetails.getUsername())){
+                        // Create a Spring Security authentication object.
                         var authToken = new UsernamePasswordAuthenticationToken(
-                                userDetails, null, userDetails.getAuthorities()
+                                userDetails,
+                                null,
+                                userDetails.getAuthorities()
                         );
+                        authToken.setDetails(
+                                new WebAuthenticationDetailsSource().buildDetails(request)
+                        );
+                       // Set in Security Context
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
                     }
 
                 }
         }
+
+        // Continue Filter Chain
+        filterChain.doFilter(request, response);
 
     }
 }
