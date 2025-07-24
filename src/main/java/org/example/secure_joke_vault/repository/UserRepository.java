@@ -2,7 +2,7 @@ package org.example.secure_joke_vault.repository;
 
 import org.example.secure_joke_vault.model.User;
 import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.data.mongodb.repository.Query;
+
 
 import java.util.Optional;
 
